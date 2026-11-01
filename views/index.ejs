@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root { --brand: #4f46e5; --brand-dark: #3730a3; --ink: #0f172a; --muted: #64748b; }
+    body { font-family: 'Poppins', sans-serif; background: #f8fafc; color: var(--ink); }
+
+    /* Navbar */
+    .nav-glass { background: rgba(255,255,255,.85); backdrop-filter: blur(10px); border-bottom: 1px solid #e2e8f0; }
+    .brand { font-weight: 700; letter-spacing: -.3px; color: var(--ink); }
+    .brand span { color: var(--brand); }
+
+    /* Hero */
+    .hero { background: linear-gradient(135deg, #312e81 0%, #4f46e5 55%, #7c3aed 100%);
+            color: #fff; border-radius: 28px; padding: 56px 48px; position: relative; overflow: hidden; }
+    .hero::after { content: ''; position: absolute; right: -80px; top: -80px; width: 320px; height: 320px;
+                   border-radius: 50%; background: rgba(255,255,255,.08); }
+    .hero::before { content: ''; position: absolute; right: 120px; bottom: -120px; width: 240px; height: 240px;
+                    border-radius: 50%; background: rgba(255,255,255,.06); }
+    .hero h1 { font-weight: 700; font-size: clamp(1.7rem, 3.5vw, 2.6rem); letter-spacing: -.5px; }
+    .hero p { color: #e0e7ff; max-width: 560px; }
+    .btn-hero { background: #fff; color: var(--brand-dark); font-weight: 600; border-radius: 999px; padding: 10px 26px; border: 0; }
+    .btn-hero:hover { background: #eef2ff; color: var(--brand-dark); }
+    .stat { background: rgba(255,255,255,.12); border-radius: 16px; padding: 14px 20px; }
+    .stat b { font-size: 1.4rem; display: block; }
+    .stat small { color: #c7d2fe; }
+
+    /* Filter */
+    .pill { border: 1px solid #e2e8f0; background: #fff; color: var(--muted); border-radius: 999px;
+            padding: 6px 18px; font-size: .88rem; font-weight: 500; transition: all .2s; }
+    .pill:hover { border-color: var(--brand); color: var(--brand); }
+    .pill.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+    /* Kartu produk */
+    .produk-card { border: 0; border-radius: 20px; overflow: hidden; background: #fff;
+                   box-shadow: 0 2px 12px rgba(15,23,42,.06); transition: transform .25s, box-shadow .25s; }
+    .produk-card:hover { transform: translateY(-6px); box-shadow: 0 16px 36px rgba(79,70,229,.18); }
+    .produk-img { aspect-ratio: 4 / 3; overflow: hidden; background: #eef2ff; position: relative; }
+    .produk-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+    .produk-card:hover .produk-img img { transform: scale(1.06); }
+    .kategori { position: absolute; left: 14px; top: 14px; background: rgba(255,255,255,.92);
+                color: var(--brand-dark); font-size: .75rem; font-weight: 600; padding: 4px 12px; border-radius: 999px; }
+    .harga { font-size: 1.2rem; font-weight: 700; color: var(--brand); }
+    .stok-ok { color: #059669; font-size: .82rem; font-weight: 500; }
+    .stok-tipis { color: #d97706; font-size: .82rem; font-weight: 500; }
+    .btn-tanya { border: 1.5px solid var(--brand); color: var(--brand); border-radius: 12px; font-weight: 500; font-size: .88rem; }
+    .btn-tanya:hover { background: var(--brand); color: #fff; }
+
+    footer { color: var(--muted); font-size: .85rem; }
+
+    /* Chat widget */
+    #chat-toggle { position: fixed; right: 24px; bottom: 24px; z-index: 1050; width: 62px; height: 62px;
+                   border-radius: 50%; border: 0; background: var(--brand); color: #fff; font-size: 1.6rem;
+                   box-shadow: 0 10px 28px rgba(79,70,229,.45); transition: transform .2s; }
+    #chat-toggle:hover { transform: scale(1.08); }
+    #chat-box { position: fixed; right: 24px; bottom: 100px; width: 360px; max-width: calc(100vw - 48px);
+                z-index: 1050; display: none; border: 0; border-radius: 22px; overflow: hidden; transform-origin: bottom right; animation: chatIn .28s ease;
+                box-shadow: 0 20px 50px rgba(15,23,42,.25); background: #fff; }
+    .chat-head { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; padding: 16px 18px; display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.2); display: grid; place-items: center; font-size: 1.2rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; display: inline-block; margin-right: 5px; }
+    #chat-messages { height: 320px; overflow-y: auto; padding: 16px; background: #f8fafc; }
+    .bubble { max-width: 85%; padding: 9px 14px; border-radius: 16px; margin-bottom: 10px; font-size: .88rem; line-height: 1.45; width: fit-content; animation: pop .25s ease; }
+    .bubble.bot { background: #fff; border: 1px solid #e2e8f0; border-bottom-left-radius: 4px; }
+    .bubble.user { background: var(--brand); color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+    .chat-foot { padding: 12px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; background: #fff; box-sizing: border-box; width: 100%; }
+    .chat-foot input { border-radius: 999px; border: 1px solid #e2e8f0; padding: 8px 16px; flex: 1 1 auto; min-width: 0; width: 100%; font-size: .9rem; outline: none; }
+    .chat-foot input:focus { border-color: var(--brand); }
+    .chat-foot button { border: 0; background: var(--brand); color: #fff; border-radius: 999px; padding: 8px 18px; font-weight: 500; flex: 0 0 auto; white-space: nowrap; }
+
+    /* ===== Animasi ===== */
+    @keyframes pop     { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
+    @keyframes chatIn  { from { opacity: 0; transform: translateY(16px) scale(.92); } to { opacity: 1; transform: none; } }
+    @keyframes fadeUp  { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+    @keyframes floaty  { 0%,100% { transform: translateY(0); } 50% { transform: translateY(22px); } }
+    @keyframes bounce  { 0%,60%,100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-5px); opacity: 1; } }
+    @keyframes blink   { 50% { opacity: 0; } }
+    @keyframes ring    { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.6); opacity: 0; } }
+
+    .hero::after  { animation: floaty 7s ease-in-out infinite; }
+    .hero::before { animation: floaty 9s ease-in-out infinite reverse; }
+
+    /* Judul hero diketik */
+    #hero-title .off { visibility: hidden; }
+    #hero-title.caret .on::after { content: '|'; margin-left: 2px; font-weight: 300; animation: blink 1s steps(1) infinite; }
+
+    /* Kartu muncul saat di-scroll */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.show { opacity: 1; transform: none; }
+    .refade { animation: fadeUp .45s ease both; }
+
+    /* Tombol chat berdenyut */
+    #chat-toggle::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--brand);
+                          animation: ring 2s ease-out infinite; pointer-events: none; }
+
+    /* Indikator "sedang mengetik" */
+    .bubble.typing { display: flex; gap: 5px; padding: 12px 16px; }
+    .bubble.typing span { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; animation: bounce 1.2s infinite; }
+    .bubble.typing span:nth-child(2) { animation-delay: .15s; }
+    .bubble.typing span:nth-child(3) { animation-delay: .3s; }
+
+    /* Tombol saran pertanyaan */
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px 0; background: #fff; border-top: 1px solid #e2e8f0; }
+    .chip { border: 1px solid #c7d2fe; background: #eef2ff; color: var(--brand-dark); border-radius: 999px;
+            padding: 4px 12px; font-size: .78rem; font-weight: 500; transition: all .2s; }
+    .chip:hover { background: var(--brand); color: #fff; border-color: var(--brand); transform: translateY(-1px); }
+    .chips + .chat-foot { border-top: 0; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .reveal { opacity: 1; transform: none; }
+      #hero-title .off { visibility: visible; }
+    }
+
+    @media (max-width: 576px) { .hero { padding: 36px 24px; } }
+  </style>
+</head>
+<body>
+
+  <nav class="nav-glass sticky-top py-3">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a class="brand text-decoration-none fs-5" href="/">ChatBot <span>AI</span> Store</a>
+      <span id="status-badge" class="badge rounded-pill text-bg-secondary fw-normal px-3 py-2">Mengecek server...</span>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+
+    <section class="hero mb-5">
+      <div class="position-relative" style="z-index:1">
+        <h1 class="mb-3" id="hero-title">Halo, ada yang bisa saya bantu hari ini?</h1>
+        <p class="mb-4"><%= tagline %></p>
+        <button class="btn btn-hero" id="hero-chat">Mulai Chat Sekarang</button>
+        <div class="d-flex flex-wrap gap-3 mt-5">
+          <div class="stat"><b>24 jam</b><small>Layanan chatbot</small></div>
+          <div class="stat"><b>&lt; 30 detik</b><small>Waktu respons</small></div>
+          <div class="stat"><b><span class="count" data-to="<%= produk.length %>"><%= produk.length %></span> produk</b><small>Siap dipesan</small></div>
+        </div>
+      </div>
+    </section>
+
+    <% var kategoriList = [...new Set(produk.map(function (p) { return p.kategori; }))]; %>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <h2 class="h4 fw-bold mb-0">Produk Pilihan</h2>
+      <div class="d-flex flex-wrap gap-2" id="filter">
+        <button class="pill active" data-kategori="semua">Semua</button>
+        <% kategoriList.forEach(function (k) { %>
+          <button class="pill" data-kategori="<%= k %>"><%= k %></button>
+        <% }) %>
+      </div>
+    </div>
+
+    <div class="row g-4" id="grid">
+      <% produk.forEach(function (p, i) { %>
+        <div class="col-12 col-sm-6 col-lg-4 item reveal" data-kategori="<%= p.kategori %>" style="transition-delay: <%= i * 90 %>ms">
+          <div class="produk-card h-100 d-flex flex-column">
+            <div class="produk-img">
+              <img src="<%= p.gambar %>" alt="<%= p.nama %>" loading="lazy">
+              <span class="kategori"><%= p.kategori %></span>
+            </div>
+            <div class="p-4 d-flex flex-column flex-grow-1">
+              <h3 class="h6 fw-semibold mb-1"><%= p.nama %></h3>
+              <div class="harga mb-1"><%= formatRupiah(p.harga) %></div>
+              <% if (p.stok <= 15) { %>
+                <div class="stok-tipis mb-3">● Stok terbatas: <%= p.stok %> unit</div>
+              <% } else { %>
+                <div class="stok-ok mb-3">● Tersedia: <%= p.stok %> unit</div>
+              <% } %>
+              <button class="btn btn-tanya mt-auto tanya" data-nama="<%= p.nama %>">💬 Tanya chatbot</button>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <footer class="text-center mt-5 pt-4 border-top">
+      <p class="mb-1">Endpoint API:
+        <a href="/api/status" target="_blank">/api/status</a> ·
+        <a href="/api/produk" target="_blank">/api/produk</a>
+      </p>
+      <p>PPAW Week 7 · Express.js + EJS + Bootstrap</p>
+    </footer>
+  </main>
+
+  <!-- Widget chatbot -->
+  <button id="chat-toggle" aria-label="Buka chat">💬</button>
+  <div id="chat-box">
+    <div class="chat-head">
+      <div class="avatar">🤖</div>
+      <div>
+        <div class="fw-semibold">Asisten Virtual</div>
+        <small><span class="dot"></span>Online</small>
+      </div>
+    </div>
+    <div id="chat-messages">
+      <div class="bubble bot">Halo, ada yang bisa saya bantu hari ini? Tanya soal produk, harga, stok, atau status pesanan ya.</div>
+    </div>
+    <div class="chips" id="chips">
+      <button class="chip" data-q="Daftar produk apa saja?">🛍️ Daftar produk</button>
+      <button class="chip" data-q="Pesanan saya belum sampai, bisa dicek?">📦 Cek pesanan</button>
+      <button class="chip" data-q="Jam layanan kapan?">🕒 Jam layanan</button>
+    </div>
+    <div class="chat-foot">
+      <input id="chat-input" type="text" placeholder="Tulis pesan...">
+      <button id="chat-send">Kirim</button>
+    </div>
+  </div>
+
+  <script>
+    // ----- Status server -----
+    fetch('/api/status')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var el = document.getElementById('status-badge');
+        el.textContent = '● Server ' + d.status;
+        el.className = 'badge rounded-pill text-bg-success fw-normal px-3 py-2';
+      })
+      .catch(function () {
+        var el = document.getElementById('status-badge');
+        el.textContent = '● Server offline';
+        el.className = 'badge rounded-pill text-bg-danger fw-normal px-3 py-2';
+      });
+
+    // ----- Filter kategori -----
+    document.querySelectorAll('#filter .pill').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('#filter .pill').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        var kat = btn.dataset.kategori;
+        document.querySelectorAll('#grid .item').forEach(function (item) {
+          var tampil = (kat === 'semua' || item.dataset.kategori === kat);
+          item.style.display = tampil ? '' : 'none';
+          if (tampil) { item.classList.remove('refade'); void item.offsetWidth; item.classList.add('refade'); }
+        });
+      });
+    });
+
+    // ----- Chatbot -----
+    var box = document.getElementById('chat-box');
+    var msgs = document.getElementById('chat-messages');
+    var input = document.getElementById('chat-input');
+
+    function bukaChat() { box.style.display = 'block'; input.focus(); }
+
+    document.getElementById('chat-toggle').onclick = function () {
+      if (box.style.display === 'block') { box.style.display = 'none'; } else { bukaChat(); }
+    };
+    document.getElementById('hero-chat').onclick = bukaChat;
+
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function tambah(teks, tipe) {
+      var div = document.createElement('div');
+      div.className = 'bubble ' + tipe;
+      div.textContent = teks;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+      return div;
+    }
+
+    // Tiga titik "sedang mengetik"
+    function tampilkanMengetik() {
+      var div = document.createElement('div');
+      div.className = 'bubble bot typing';
+      div.innerHTML = '<span></span><span></span><span></span>';
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+      return div;
+    }
+
+    // Balasan bot muncul huruf demi huruf
+    function ketikBertahap(el, teks, selesai) {
+      var i = 0;
+      (function langkah() {
+        i = reduce ? teks.length : i + 1;
+        el.textContent = teks.slice(0, i);
+        msgs.scrollTop = msgs.scrollHeight;
+        if (i < teks.length) { setTimeout(langkah, 18); } else if (selesai) { selesai(); }
+      })();
+    }
+
+    var sedangMenjawab = false;
+
+    function kirim(teks) {
+      if (sedangMenjawab) return;
+      var pesan = (teks || input.value).trim();
+      if (!pesan) return;
+      tambah(pesan, 'user');
+      input.value = '';
+      sedangMenjawab = true;
+
+      var indikator = tampilkanMengetik();
+      var mulai = Date.now();
+
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pesan: pesan })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { return d.balasan || d.message; })
+        .catch(function () { return 'Maaf, server sedang bermasalah.'; })
+        .then(function (balasan) {
+          // tampilkan titik-titik minimal 0,9 detik supaya terasa natural
+          var sisa = Math.max(0, 900 - (Date.now() - mulai));
+          setTimeout(function () {
+            indikator.remove();
+            var el = tambah('', 'bot');
+            ketikBertahap(el, balasan, function () { sedangMenjawab = false; });
+          }, sisa);
+        });
+    }
+
+    document.getElementById('chat-send').onclick = function () { kirim(); };
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') kirim(); });
+
+    // Tombol "Tanya chatbot" di kartu produk
+    document.querySelectorAll('.tanya').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        bukaChat();
+        kirim('Harga ' + btn.dataset.nama + ' berapa?');
+      });
+    });
+
+    // Tombol saran pertanyaan
+    document.querySelectorAll('#chips .chip').forEach(function (btn) {
+      btn.addEventListener('click', function () { kirim(btn.dataset.q); });
+    });
+
+    // Judul hero diketik
+    (function () {
+      var judul = document.getElementById('hero-title');
+      var teks = judul.textContent.trim();
+      if (reduce) return;
+      judul.innerHTML = '<span class="on"></span><span class="off"></span>';
+      var on = judul.querySelector('.on'), off = judul.querySelector('.off');
+      off.textContent = teks;
+      judul.classList.add('caret');
+      var n = 0;
+      (function langkah() {
+        n++;
+        on.textContent = teks.slice(0, n);
+        off.textContent = teks.slice(n);
+        if (n < teks.length) { setTimeout(langkah, 45); }
+        else { setTimeout(function () { judul.classList.remove('caret'); }, 2000); }
+      })();
+    })();
+
+    // Angka naik (count-up)
+    document.querySelectorAll('.count').forEach(function (el) {
+      var target = Number(el.dataset.to), n = 0;
+      if (reduce || !target) return;
+      el.textContent = 0;
+      var iv = setInterval(function () {
+        n++; el.textContent = n;
+        if (n >= target) clearInterval(iv);
+      }, 200);
+    });
+
+    // Kartu produk muncul perlahan saat di-scroll
+    var kartu = document.querySelectorAll('.reveal');
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('show'); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.12 });
+      kartu.forEach(function (el) { io.observe(el); });
+    } else {
+      kartu.forEach(function (el) { el.classList.add('show'); });
+    }
+  </script>
+</body>
+</html>
