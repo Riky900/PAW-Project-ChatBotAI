@@ -76,7 +76,7 @@
     .chat-foot button { border: 0; background: var(--brand); color: #fff; border-radius: 999px; padding: 8px 18px; font-weight: 500; flex: 0 0 auto; white-space: nowrap; }
 
     /* ===== Animasi ===== */
-    @keyframes pop     { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
+    @keyframes pop    { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
     @keyframes chatIn  { from { opacity: 0; transform: translateY(16px) scale(.92); } to { opacity: 1; transform: none; } }
     @keyframes fadeUp  { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
     @keyframes floaty  { 0%,100% { transform: translateY(0); } 50% { transform: translateY(22px); } }
@@ -185,7 +185,7 @@
         <a href="/api/status" target="_blank">/api/status</a> ·
         <a href="/api/produk" target="_blank">/api/produk</a>
       </p>
-      <p>PPAW Week 7 · Express.js + EJS + Bootstrap</p>
+      <p>PPAW Week · Express.js + EJS + Bootstrap</p>
     </footer>
   </main>
 
@@ -302,13 +302,17 @@
       fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pesan: pesan })
+        body: JSON.stringify({ message: pesan }) // Disesuaikan dengan payload backend Express ({ message })
       })
         .then(function (r) { return r.json(); })
-        .then(function (d) { return d.balasan || d.message; })
+        .then(function (d) { 
+          // Mendukung format response dari backend Gemini ({ success: true, data: { reply: "..." } }) ataupun format lama
+          if (d.data && d.data.reply) return d.data.reply;
+          return d.balasan || d.message || 'Respons tidak valid.'; 
+        })
         .catch(function () { return 'Maaf, server sedang bermasalah.'; })
         .then(function (balasan) {
-          // tampilkan titik-titik minimal 0,9 detik supaya terasa natural
+          // Tampilkan titik-titik minimal 900ms supaya terasa natural
           var sisa = Math.max(0, 900 - (Date.now() - mulai));
           setTimeout(function () {
             indikator.remove();

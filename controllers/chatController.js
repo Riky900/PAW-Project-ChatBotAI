@@ -1,38 +1,39 @@
-const chatbotModel = require('../models/chatbotModel');
+// controllers/chatController.js
+const geminiService = require('../services/gemini.service.js');
 
-// POST /api/chat
-const kirimPesan = async (req, res) => {
+async function kirimPesan(req, res) {
   try {
-    // Mendukung key 'pesan', 'message', ataupun 'prompt' dari request body
-    const userMessage = req.body.pesan || req.body.message || req.body.prompt;
+    // Mendukung key 'message' atau 'pesan' dari frontend agar fleksibel
+    const message = req.body.message || req.body.pesan;
 
-    if (!userMessage || !String(userMessage).trim()) {
-      return res.status(400).json({ 
-        status: 'error', 
-        success: false, 
-        message: 'Field "pesan" wajib diisi' 
+    if (!message || typeof message !== 'string' || message.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Pesan tidak boleh kosong dan harus berupa teks.'
       });
     }
 
-    // Gunakan await karena fungsi balas sekarang asynchronous
-    const botReply = await chatbotModel.balas(userMessage);
+    // Panggil service untuk mendapatkan respons dari Gemini AI
+    const reply = await geminiService.generateChatResponse(message);
 
-    res.status(200).json({ 
-      status: 'success',
-      success: true, 
-      pesan: String(userMessage),
-      balasan: botReply,
-      reply: botReply, // Menyediakan key 'balasan' dan 'reply' sekaligus agar aman untuk frontend lama/baru
-      timestamp: new Date().toISOString(),
+    // Kirim respons sukses (mendukung format .data.reply maupun .balasan untuk frontend)
+    return res.status(200).json({
+      success: true,
+      data: {
+        reply: reply
+      },
+      balasan: reply // Kompatibilitas cadangan jika frontend memakai .balasan
     });
+
   } catch (error) {
-    console.error("Error di controller chat:", error);
-    res.status(500).json({ 
-      status: 'error',
-      success: false, 
-      message: "Gagal memproses pesan." 
+    console.error('Error di chatController:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan pada server saat memproses AI Assistant.'
     });
   }
-};
+}
 
-module.exports = { kirimPesan };
+module.exports = {
+  kirimPesan,
+};

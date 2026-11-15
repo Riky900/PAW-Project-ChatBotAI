@@ -17,12 +17,12 @@ app.set('views', path.join(__dirname, 'views'));
 // Helper tersedia di semua template EJS
 app.locals.formatRupiah = formatRupiah;
 
-// Middleware (logger dipasang paling awal supaya semua request tercatat)
+// Middleware (logger dan express.json dipasang SEBELUM routes)
 app.use(logger);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'))); // gambar, dll.
 
-// Routes
+// Routes (endpoint /api/chat sudah masuk di dalam apiRoutes)
 app.use('/api', apiRoutes);
 app.use('/', viewRoutes);
 
