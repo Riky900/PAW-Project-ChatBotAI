@@ -159,7 +159,7 @@
 
     <div class="row g-4" id="grid">
       <% produk.forEach(function (p, i) { %>
-        <div class="col-12 col-sm-6 col-lg-4 item reveal" data-kategori="<%= p.kategori %>" style="transition-delay: <%= i * 90 %>ms">
+        <div class="col-12 col-sm-6 col-lg-4 item reveal" data-kategori="<%= p.kategori %>">
           <div class="produk-card h-100 d-flex flex-column">
             <div class="produk-img">
               <img src="<%= p.gambar %>" alt="<%= p.nama %>" loading="lazy">
@@ -247,6 +247,24 @@
     var msgs = document.getElementById('chat-messages');
     var input = document.getElementById('chat-input');
 
+    // ----- Fitur Tambahan: LocalStorage Chat History -----
+    function saveChatHistory() {
+        if (msgs) {
+            localStorage.setItem('chat_history', msgs.innerHTML);
+        }
+    }
+
+    function loadChatHistory() {
+        var savedHistory = localStorage.getItem('chat_history');
+        if (msgs && savedHistory) {
+            msgs.innerHTML = savedHistory;
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+    }
+
+    // Panggil saat halaman pertama kali dimuat
+    document.addEventListener('DOMContentLoaded', loadChatHistory);
+
     function bukaChat() { box.style.display = 'block'; input.focus(); }
 
     document.getElementById('chat-toggle').onclick = function () {
@@ -262,6 +280,7 @@
       div.textContent = teks;
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
+      saveChatHistory(); // Simpan riwayat setelah pesan ditambah
       return div;
     }
 
@@ -282,6 +301,7 @@
         i = reduce ? teks.length : i + 1;
         el.textContent = teks.slice(0, i);
         msgs.scrollTop = msgs.scrollHeight;
+        saveChatHistory(); // Simpan riwayat secara berkala saat efek ketik berjalan
         if (i < teks.length) { setTimeout(langkah, 18); } else if (selesai) { selesai(); }
       })();
     }
