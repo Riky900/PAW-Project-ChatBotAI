@@ -4,39 +4,39 @@ const produkModel = require('../models/produkModel.js');
 
 async function generateChatResponse(userMessage) {
   try {
-    // Ambil data produk dari model/database lokal sebagai konteks AI
-    const daftarProduk = typeof produkModel.getAll === 'function' ? produkModel.getAll() : [];
+    // Tambahkan 'await' karena getAll() sekarang mengambil data dari database MySQL
+    const daftarProduk = typeof produkModel.getAll === 'function' ? await produkModel.getAll() : [];
     const contextProduk = JSON.stringify(daftarProduk);
 
     // Susun System Instruction & Guardrail yang ketat
     const systemInstruction = `
       Kamu adalah AI Assistant resmi untuk aplikasi katalog aksesori komputer dan gadget.
-      Tugasmu adalah membantu pengguna memahami informasi produk, harga, stok, jam layanan, dan panduan pengecekan pesanan.
+      Tugasmu adalah membantu pengguna memahami informasi produk, harga, stok, deskripsi produk, jam layanan, dan panduan pengecekan pesanan.
       
       SUMBER DATA APLIKASI & TOKO:
-      - Katalog Produk: ${contextProduk}
-      - Jam Layanan: Senin - Sabtu, pukul 08.00 - 21.00 WIB. Hari Minggu / Tanggal Merah Libur.
-      - Info Cek Pesanan: Pelanggan dapat mengecek status pesanan melalui halaman Riwayat Pesanan di akun masing-masing atau memasukkan nomor resi di menu tracking pengiriman.
+- Katalog Produk: ${contextProduk}
+- Jam Layanan: Senin - Sabtu, pukul 08.00 - 21.00 WIB. Hari Minggu / Tanggal Merah Libur.
+- Info Cek Pesanan: Pelanggan dapat mengecek status pesanan melalui halaman Riwayat Pesanan di akun masing-masing atau memasukkan nomor resi di menu tracking pengiriman.
 
       ATURAN KETAT (GUARDRAILS):
-      1. Kamu HANYA boleh menjawab pertanyaan yang berkaitan dengan produk, informasi toko, jam layanan, dan layanan yang ada di aplikasi ini.
-      2. Jika pengguna bertanya di luar konteks aplikasi (misal: coding game, resep masakan, politik, dll), tolak secara sopan.
-      3. Jangan pernah mengarang informasi yang tidak ada di dalam sumber data.
+1. Kamu HANYA boleh menjawab pertanyaan yang berkaitan dengan produk, informasi toko, jam layanan, dan layanan yang ada di aplikasi ini.
+2. Jika pengguna bertanya di luar konteks aplikasi (misal: coding game, resep masakan, politik, dll), tolak secara sopan.
+3. Jangan pernah mengarang informasi yang tidak ada di dalam sumber data.
     `;
 
     console.log('Mengirim pesan ke Gemini API...');
     const startTime = Date.now();
 
-    // Panggil Gemini API menggunakan model terbaru
+    // Gunakan model gemini-2.5-flash yang valid dan cepat
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash-lite',
+      model: 'gemini-2.5-flash',
       contents: [
         { role: 'user', parts: [{ text: userMessage }] }
       ],
       config: {
         systemInstruction: systemInstruction,
         temperature: 0.3,
-        maxOutputTokens: 300, // Dioptimalkan ke 300 agar respons lebih cepat selesai
+        maxOutputTokens: 300,
       }
     });
 

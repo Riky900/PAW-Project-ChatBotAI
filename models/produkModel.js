@@ -1,21 +1,39 @@
-// Model: data produk toko online (array statis, tanpa database)
-const produk = [
-  { id: 1, gambar: '/images/headset.svg', nama: 'Headset Bluetooth', kategori: 'Audio', harga: 250000, stok: 20 },
-  { id: 2, gambar: '/images/keyboard.svg', nama: 'Keyboard Mechanical', kategori: 'Komputer', harga: 450000, stok: 15 },
-  { id: 3, gambar: '/images/mouse.svg', nama: 'Mouse Wireless', kategori: 'Komputer', harga: 150000, stok: 40 },
-  { id: 4, gambar: '/images/powerbank.svg', nama: 'Power Bank 10000mAh', kategori: 'Aksesoris', harga: 180000, stok: 30 },
-  { id: 5, gambar: '/images/webcam.svg', nama: 'Webcam Full HD', kategori: 'Komputer', harga: 320000, stok: 12 },
-];
+const db = require('../config/database');
 
-const getAll = () => produk;
-
-const getById = (id) => produk.find((p) => p.id === Number(id));
-
-// Cari produk yang namanya disebut dalam teks pesan
-const cariDalamTeks = (teks) => {
-  const t = teks.toLowerCase();
-  return produk.find((p) => t.includes(p.nama.toLowerCase()) ||
-    p.nama.toLowerCase().split(' ').some((kata) => kata.length > 4 && t.includes(kata)));
+const getAll = async () => {
+  const [rows] = await db.query('SELECT * FROM produk ORDER BY id DESC');
+  return rows;
 };
 
-module.exports = { getAll, getById, cariDalamTeks };
+const getById = async (id) => {
+  const [rows] = await db.query('SELECT * FROM produk WHERE id = ?', [Number(id)]);
+  return rows[0];
+};
+
+const cariDalamTeks = async (teks) => {
+  const produk = await getAll();
+  const t = teks.toLowerCase();
+  return produk.find((p) => t.includes(p.nama.toLowerCase())) ||
+    produk.find((p) => p.nama.toLowerCase().split(' ').some((kata) => kata.length > 4 && t.includes(kata)));
+};
+
+const create = async ({ gambar, nama, kategori, harga, stok, deskripsi }) => {
+  const [result] = await db.query(
+    'INSERT INTO produk (gambar, nama, kategori, harga, stok, deskripsi) VALUES (?, ?, ?, ?, ?, ?)',
+    [gambar || '/images/headset.svg', nama, kategori, Number(harga), Number(stok), deskripsi]
+  );
+  return result.insertId;
+};
+
+const update = async (id, { gambar, nama, kategori, harga, stok, deskripsi }) => {
+  await db.query(
+    'UPDATE produk SET gambar = ?, nama = ?, kategori = ?, harga = ?, stok = ?, deskripsi = ? WHERE id = ?',
+    [gambar || '/images/headset.svg', nama, kategori, Number(harga), Number(stok), deskripsi, Number(id)]
+  );
+};
+
+const remove = async (id) => {
+  await db.query('DELETE FROM produk WHERE id = ?', [Number(id)]);
+};
+
+module.exports = { getAll, getById, cariDalamTeks, create, update, remove };

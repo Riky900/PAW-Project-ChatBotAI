@@ -11,17 +11,31 @@ const balas = async (pesan) => {
 
   if (!teks) return 'Silakan ketik pertanyaanmu.';
 
-  // 1. Cek produk lokal terlebih dahulu
-  const p = produkModel.cariDalamTeks(teks);
+  // 1. Cek produk lokal terlebih dahulu (WAJIB pakai await karena dari database)
+  const p = await produkModel.cariDalamTeks(teks);
   if (p) {
-    return `${p.nama}: ${formatRupiah(p.harga)}, stok tersedia ${p.stok} unit.`;
+    return `${p.nama}: ${formatRupiah(p.harga)}, stok tersedia ${p.stok} unit.\nDeskripsi: ${p.deskripsi}`;
   }
 
-  // 2. Coba panggil Gemini API
+  // 2. Coba panggil Gemini API dengan membawa data katalog produk dari database
   try {
+    const semuaProduk = await produkModel.getAll();
+    const katalogTeks = semuaProduk
+      .map(
+        (item) =>
+          `- ${item.nama} (Kategori: ${item.kategori}, Harga: ${formatRupiah(item.harga)}, Stok: ${item.stok} unit): ${item.deskripsi}`
+      )
+      .join('\n');
+
+    const prompt = `Anda adalah asisten virtual toko online "ChatBot AI Store". 
+Gunakan data katalog produk toko kami berikut ini sebagai referensi jika pelanggan bertanya soal produk, rekomendasi, harga, stok, atau spesifikasi:
+${katalogTeks}
+
+Jawab pertanyaan pelanggan berikut dengan ramah, singkat, dan natural dalam bahasa Indonesia: "${pesan}"`;
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: `Anda adalah asisten virtual toko online "ChatBot AI Store". Jawab pertanyaan berikut dengan ramah dan natural dalam bahasa Indonesia: "${pesan}"`,
+      contents: prompt,
     });
 
     if (response && response.text) {

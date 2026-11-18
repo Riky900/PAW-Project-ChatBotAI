@@ -16,6 +16,8 @@
     .nav-glass { background: rgba(255,255,255,.85); backdrop-filter: blur(10px); border-bottom: 1px solid #e2e8f0; }
     .brand { font-weight: 700; letter-spacing: -.3px; color: var(--ink); }
     .brand span { color: var(--brand); }
+    .btn-admin-nav { border: 1.5px solid #cbd5e1; background: #fff; color: var(--ink); border-radius: 999px; font-size: .82rem; font-weight: 600; padding: 6px 16px; transition: all .2s; }
+    .btn-admin-nav:hover { border-color: var(--brand); color: var(--brand); background: #eef2ff; }
 
     /* Hero */
     .hero { background: linear-gradient(135deg, #312e81 0%, #4f46e5 55%, #7c3aed 100%);
@@ -39,7 +41,7 @@
     .pill.active { background: var(--brand); border-color: var(--brand); color: #fff; }
 
     /* Kartu produk */
-    .produk-card { border: 0; border-radius: 20px; overflow: hidden; background: #fff;
+    .produk-card { border: 0; border-radius: 20px; overflow: hidden; background: #fff; cursor: pointer;
                    box-shadow: 0 2px 12px rgba(15,23,42,.06); transition: transform .25s, box-shadow .25s; }
     .produk-card:hover { transform: translateY(-6px); box-shadow: 0 16px 36px rgba(79,70,229,.18); }
     .produk-img { aspect-ratio: 4 / 3; overflow: hidden; background: #eef2ff; position: relative; }
@@ -52,6 +54,12 @@
     .stok-tipis { color: #d97706; font-size: .82rem; font-weight: 500; }
     .btn-tanya { border: 1.5px solid var(--brand); color: var(--brand); border-radius: 12px; font-weight: 500; font-size: .88rem; }
     .btn-tanya:hover { background: var(--brand); color: #fff; }
+
+    /* Modal Detail Produk */
+    .modal-produk-content { border: 0; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(15,23,42,.25); }
+    .modal-produk-img { background: #eef2ff; height: 220px; display: flex; align-items: center; justify-content: center; padding: 20px; position: relative; }
+    .modal-produk-img img { max-height: 100%; max-width: 100%; object-fit: contain; }
+    .modal-deskripsi { color: #475569; font-size: .92rem; line-height: 1.65; }
 
     footer { color: var(--muted); font-size: .85rem; }
 
@@ -87,26 +95,21 @@
     .hero::after  { animation: floaty 7s ease-in-out infinite; }
     .hero::before { animation: floaty 9s ease-in-out infinite reverse; }
 
-    /* Judul hero diketik */
     #hero-title .off { visibility: hidden; }
     #hero-title.caret .on::after { content: '|'; margin-left: 2px; font-weight: 300; animation: blink 1s steps(1) infinite; }
 
-    /* Kartu muncul saat di-scroll */
     .reveal { opacity: 0; transform: translateY(28px); transition: opacity .6s ease, transform .6s ease; }
     .reveal.show { opacity: 1; transform: none; }
     .refade { animation: fadeUp .45s ease both; }
 
-    /* Tombol chat berdenyut */
     #chat-toggle::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--brand);
                           animation: ring 2s ease-out infinite; pointer-events: none; }
 
-    /* Indikator "sedang mengetik" */
     .bubble.typing { display: flex; gap: 5px; padding: 12px 16px; }
     .bubble.typing span { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; animation: bounce 1.2s infinite; }
     .bubble.typing span:nth-child(2) { animation-delay: .15s; }
     .bubble.typing span:nth-child(3) { animation-delay: .3s; }
 
-    /* Tombol saran pertanyaan */
     .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px 0; background: #fff; border-top: 1px solid #e2e8f0; }
     .chip { border: 1px solid #c7d2fe; background: #eef2ff; color: var(--brand-dark); border-radius: 999px;
             padding: 4px 12px; font-size: .78rem; font-weight: 500; transition: all .2s; }
@@ -127,7 +130,10 @@
   <nav class="nav-glass sticky-top py-3">
     <div class="container d-flex justify-content-between align-items-center">
       <a class="brand text-decoration-none fs-5" href="/">ChatBot <span>AI</span> Store</a>
-      <span id="status-badge" class="badge rounded-pill text-bg-secondary fw-normal px-3 py-2">Mengecek server...</span>
+      <div class="d-flex align-items-center gap-2">
+        <span id="status-badge" class="badge rounded-pill text-bg-secondary fw-normal px-3 py-2 d-none d-sm-inline-block">Mengecek server...</span>
+        <button id="btn-open-admin" class="btn btn-admin-nav">🔐 Admin</button>
+      </div>
     </div>
   </nav>
 
@@ -148,7 +154,10 @@
 
     <% var kategoriList = [...new Set(produk.map(function (p) { return p.kategori; }))]; %>
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-      <h2 class="h4 fw-bold mb-0">Produk Pilihan</h2>
+      <div>
+        <h2 class="h4 fw-bold mb-0">Produk Pilihan</h2>
+        <small class="text-muted">Klik kartu produk untuk melihat detail &amp; deskripsi</small>
+      </div>
       <div class="d-flex flex-wrap gap-2" id="filter">
         <button class="pill active" data-kategori="semua">Semua</button>
         <% kategoriList.forEach(function (k) { %>
@@ -160,7 +169,13 @@
     <div class="row g-4" id="grid">
       <% produk.forEach(function (p, i) { %>
         <div class="col-12 col-sm-6 col-lg-4 item reveal" data-kategori="<%= p.kategori %>">
-          <div class="produk-card h-100 d-flex flex-column">
+          <div class="produk-card h-100 d-flex flex-column"
+               data-gambar="<%= p.gambar %>"
+               data-kategori="<%= p.kategori %>"
+               data-nama="<%= p.nama %>"
+               data-harga="<%= formatRupiah(p.harga) %>"
+               data-stok="<%= p.stok %>"
+               data-deskripsi="<%= p.deskripsi || 'Belum ada deskripsi untuk produk ini.' %>">
             <div class="produk-img">
               <img src="<%= p.gambar %>" alt="<%= p.nama %>" loading="lazy">
               <span class="kategori"><%= p.kategori %></span>
@@ -189,6 +204,136 @@
     </footer>
   </main>
 
+  <!-- Modal Detail Produk -->
+  <div class="modal fade" id="modalDetailProduk" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content modal-produk-content">
+        <div class="modal-produk-img">
+          <span class="kategori" id="modal-kategori"></span>
+          <button type="button" class="btn-close position-absolute top-0 end-0 m-3 bg-white p-2 rounded-circle shadow-sm" data-bs-dismiss="modal" aria-label="Tutup"></button>
+          <img id="modal-gambar" src="" alt="Detail Produk">
+        </div>
+        <div class="modal-body p-4">
+          <h4 class="fw-bold mb-1" id="modal-nama"></h4>
+          <div class="harga mb-2" id="modal-harga"></div>
+          <div class="mb-3" id="modal-stok"></div>
+          <hr class="my-3">
+          <h6 class="fw-semibold mb-2">Deskripsi Produk</h6>
+          <p class="modal-deskripsi mb-4" id="modal-deskripsi"></p>
+          <button type="button" class="btn btn-tanya w-100 py-2" id="modal-btn-tanya">💬 Tanya chatbot soal produk ini</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Login Admin -->
+  <div class="modal fade" id="modalAdminLogin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">🔐 Login Admin</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="form-admin-login">
+            <label class="form-label small text-muted">Masukkan Password Admin</label>
+            <input type="password" id="input-admin-pass" class="form-control mb-2" placeholder="Password..." required>
+            <div id="login-error" class="text-danger small mb-2" style="display:none;"></div>
+            <button type="submit" class="btn btn-primary w-100 rounded-pill" style="background: var(--brand); border:0;">Masuk</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Panel Admin (CRUD Produk) -->
+  <div class="modal fade" id="modalAdminPanel" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header" style="background: linear-gradient(135deg, #312e81, #4f46e5); color: #fff;">
+          <h5 class="modal-title fw-bold">⚙️ Panel Admin - Kelola Katalog Produk</h5>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" id="btn-admin-logout" class="btn btn-sm btn-outline-light rounded-pill px-3">Logout</button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-4">
+            <!-- Form Tambah / Edit Produk -->
+            <div class="col-lg-4">
+              <div class="card border-0 bg-light rounded-4 p-3">
+                <h6 class="fw-bold mb-3" id="form-produk-title">➕ Tambah Produk Baru</h6>
+                <form id="form-admin-produk">
+                  <input type="hidden" id="prod-id">
+                  <div class="mb-2">
+                    <label class="form-label small fw-semibold mb-1">Nama Produk</label>
+                    <input type="text" id="prod-nama" class="form-control form-control-sm" placeholder="Contoh: Mouse Gaming" required>
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label small fw-semibold mb-1">Kategori</label>
+                    <input type="text" id="prod-kategori" class="form-control form-control-sm" placeholder="Komputer / Audio / Aksesoris" required>
+                  </div>
+                  <div class="row g-2 mb-2">
+                    <div class="col-7">
+                      <label class="form-label small fw-semibold mb-1">Harga (Rp)</label>
+                      <input type="number" id="prod-harga" class="form-control form-control-sm" placeholder="250000" required>
+                    </div>
+                    <div class="col-5">
+                      <label class="form-label small fw-semibold mb-1">Stok</label>
+                      <input type="number" id="prod-stok" class="form-control form-control-sm" placeholder="10" required>
+                    </div>
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label small fw-semibold mb-1">Path / URL Gambar</label>
+                    <select id="prod-gambar" class="form-select form-select-sm">
+                      <option value="/images/headset.svg">/images/headset.svg</option>
+                      <option value="/images/keyboard.svg">/images/keyboard.svg</option>
+                      <option value="/images/mouse.svg">/images/mouse.svg</option>
+                      <option value="/images/powerbank.svg">/images/powerbank.svg</option>
+                      <option value="/images/webcam.svg">/images/webcam.svg</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold mb-1">Deskripsi Produk</label>
+                    <textarea id="prod-deskripsi" class="form-control form-control-sm" rows="3" placeholder="Tulis spesifikasi & keunggulan produk..." required></textarea>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary flex-grow-1 rounded-pill" style="background: var(--brand); border:0;">Simpan Produk</button>
+                    <button type="button" id="btn-batal-edit" class="btn btn-sm btn-secondary rounded-pill" style="display:none;">Batal</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Tabel Daftar Produk -->
+            <div class="col-lg-8">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0">📦 Daftar Produk di Database</h6>
+                <small class="text-muted">Perubahan langsung sinkron ke AI Chatbot</small>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle small">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Produk</th>
+                      <th>Kategori</th>
+                      <th>Harga</th>
+                      <th>Stok</th>
+                      <th class="text-end">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-table-body">
+                    <tr><td colspan="5" class="text-center text-muted py-3">Memuat data...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Widget chatbot -->
   <button id="chat-toggle" aria-label="Buka chat">💬</button>
   <div id="chat-box">
@@ -213,6 +358,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // ----- Status server -----
     fetch('/api/status')
@@ -220,12 +366,12 @@
       .then(function (d) {
         var el = document.getElementById('status-badge');
         el.textContent = '● Server ' + d.status;
-        el.className = 'badge rounded-pill text-bg-success fw-normal px-3 py-2';
+        el.className = 'badge rounded-pill text-bg-success fw-normal px-3 py-2 d-none d-sm-inline-block';
       })
       .catch(function () {
         var el = document.getElementById('status-badge');
         el.textContent = '● Server offline';
-        el.className = 'badge rounded-pill text-bg-danger fw-normal px-3 py-2';
+        el.className = 'badge rounded-pill text-bg-danger fw-normal px-3 py-2 d-none d-sm-inline-block';
       });
 
     // ----- Filter kategori -----
@@ -242,27 +388,207 @@
       });
     });
 
+    // ----- Modal Detail Produk saat kartu diklik -----
+    var modalProduk = new bootstrap.Modal(document.getElementById('modalDetailProduk'));
+
+    document.querySelectorAll('.produk-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        var stok = Number(card.dataset.stok);
+        document.getElementById('modal-gambar').src = card.dataset.gambar;
+        document.getElementById('modal-gambar').alt = card.dataset.nama;
+        document.getElementById('modal-kategori').textContent = card.dataset.kategori;
+        document.getElementById('modal-nama').textContent = card.dataset.nama;
+        document.getElementById('modal-harga').textContent = card.dataset.harga;
+        document.getElementById('modal-deskripsi').textContent = card.dataset.deskripsi;
+
+        var stokEl = document.getElementById('modal-stok');
+        if (stok <= 15) {
+          stokEl.className = 'stok-tipis mb-3';
+          stokEl.textContent = '● Stok terbatas: ' + stok + ' unit';
+        } else {
+          stokEl.className = 'stok-ok mb-3';
+          stokEl.textContent = '● Tersedia: ' + stok + ' unit';
+        }
+
+        document.getElementById('modal-btn-tanya').dataset.nama = card.dataset.nama;
+        modalProduk.show();
+      });
+    });
+
+    document.getElementById('modal-btn-tanya').addEventListener('click', function () {
+      var namaProduk = this.dataset.nama;
+      modalProduk.hide();
+      bukaChat();
+      kirim('Jelaskan detail dan spesifikasi ' + namaProduk);
+    });
+
+    // ----- Panel Admin -----
+    var modalAdminLogin = new bootstrap.Modal(document.getElementById('modalAdminLogin'));
+    var modalAdminPanel = new bootstrap.Modal(document.getElementById('modalAdminPanel'));
+    var adminDaftarProduk = [];
+
+    document.getElementById('btn-open-admin').addEventListener('click', function () {
+      if (sessionStorage.getItem('admin_pass')) {
+        muatTabelAdmin();
+        modalAdminPanel.show();
+      } else {
+        document.getElementById('login-error').style.display = 'none';
+        document.getElementById('input-admin-pass').value = '';
+        modalAdminLogin.show();
+      }
+    });
+
+    document.getElementById('form-admin-login').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var pass = document.getElementById('input-admin-pass').value;
+      var errEl = document.getElementById('login-error');
+
+      try {
+        var res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass })
+        });
+        var data = await res.json();
+        if (res.ok && data.success) {
+          sessionStorage.setItem('admin_pass', pass);
+          modalAdminLogin.hide();
+          muatTabelAdmin();
+          modalAdminPanel.show();
+        } else {
+          errEl.textContent = data.message || 'Password salah!';
+          errEl.style.display = 'block';
+        }
+      } catch (err) {
+        errEl.textContent = 'Gagal terhubung ke server.';
+        errEl.style.display = 'block';
+      }
+    });
+
+    document.getElementById('btn-admin-logout').addEventListener('click', function () {
+      sessionStorage.removeItem('admin_pass');
+      modalAdminPanel.hide();
+      location.reload();
+    });
+
+    async function muatTabelAdmin() {
+      var tbody = document.getElementById('admin-table-body');
+      try {
+        var res = await fetch('/api/produk');
+        adminDaftarProduk = await res.json();
+        if (!adminDaftarProduk.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Belum ada produk.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = adminDaftarProduk.map(function (p) {
+          return '<tr>' +
+            '<td><strong>' + p.nama + '</strong><br><small class="text-muted text-truncate d-inline-block" style="max-width:200px;">' + (p.deskripsi || '-') + '</small></td>' +
+            '<td><span class="badge bg-secondary-subtle text-dark">' + p.kategori + '</span></td>' +
+            '<td>Rp ' + Number(p.harga).toLocaleString('id-ID') + '</td>' +
+            '<td>' + p.stok + '</td>' +
+            '<td class="text-end text-nowrap">' +
+              '<button class="btn btn-sm btn-outline-primary me-1" onclick="pilihEditProduk(' + p.id + ')">Edit</button>' +
+              '<button class="btn btn-sm btn-outline-danger" onclick="hapusProdukAdmin(' + p.id + ', \'' + p.nama.replace(/'/g, "\\'") + '\')">Hapus</button>' +
+            '</td>' +
+          '</tr>';
+        }).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Gagal memuat produk.</td></tr>';
+      }
+    }
+
+    function resetFormProduk() {
+      document.getElementById('form-admin-produk').reset();
+      document.getElementById('prod-id').value = '';
+      document.getElementById('form-produk-title').textContent = '➕ Tambah Produk Baru';
+      document.getElementById('btn-batal-edit').style.display = 'none';
+    }
+
+    document.getElementById('btn-batal-edit').addEventListener('click', resetFormProduk);
+
+    window.pilihEditProduk = function (id) {
+      var p = adminDaftarProduk.find(function (item) { return item.id === id; });
+      if (!p) return;
+      document.getElementById('prod-id').value = p.id;
+      document.getElementById('prod-nama').value = p.nama;
+      document.getElementById('prod-kategori').value = p.kategori;
+      document.getElementById('prod-harga').value = p.harga;
+      document.getElementById('prod-stok').value = p.stok;
+      document.getElementById('prod-gambar').value = p.gambar;
+      document.getElementById('prod-deskripsi').value = p.deskripsi || '';
+      document.getElementById('form-produk-title').textContent = '✏️ Edit Produk #' + p.id;
+      document.getElementById('btn-batal-edit').style.display = 'inline-block';
+    };
+
+    document.getElementById('form-admin-produk').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var id = document.getElementById('prod-id').value;
+      var payload = {
+        nama: document.getElementById('prod-nama').value,
+        kategori: document.getElementById('prod-kategori').value,
+        harga: document.getElementById('prod-harga').value,
+        stok: document.getElementById('prod-stok').value,
+        gambar: document.getElementById('prod-gambar').value,
+        deskripsi: document.getElementById('prod-deskripsi').value
+      };
+
+      var url = id ? '/api/produk/' + id : '/api/produk';
+      var method = id ? 'PUT' : 'POST';
+
+      var res = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': sessionStorage.getItem('admin_pass') || ''
+        },
+        body: JSON.stringify(payload)
+      });
+
+      var data = await res.json();
+      if (res.ok && data.success) {
+        resetFormProduk();
+        await muatTabelAdmin();
+      } else {
+        alert(data.message || 'Gagal menyimpan produk.');
+      }
+    });
+
+    window.hapusProdukAdmin = async function (id, nama) {
+      if (!confirm('Yakin ingin menghapus "' + nama + '"?')) return;
+      var res = await fetch('/api/produk/' + id, {
+        method: 'DELETE',
+        headers: { 'x-admin-password': sessionStorage.getItem('admin_pass') || '' }
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        await muatTabelAdmin();
+      } else {
+        alert(data.message || 'Gagal menghapus produk.');
+      }
+    };
+
+    // Refresh halaman utama saat modal admin ditutup agar katalog depan ikut terupdate
+    document.getElementById('modalAdminPanel').addEventListener('hidden.bs.modal', function () {
+      location.reload();
+    });
+
     // ----- Chatbot -----
     var box = document.getElementById('chat-box');
     var msgs = document.getElementById('chat-messages');
     var input = document.getElementById('chat-input');
 
-    // ----- Fitur Tambahan: LocalStorage Chat History -----
     function saveChatHistory() {
-        if (msgs) {
-            localStorage.setItem('chat_history', msgs.innerHTML);
-        }
+      if (msgs) localStorage.setItem('chat_history', msgs.innerHTML);
     }
 
     function loadChatHistory() {
-        var savedHistory = localStorage.getItem('chat_history');
-        if (msgs && savedHistory) {
-            msgs.innerHTML = savedHistory;
-            msgs.scrollTop = msgs.scrollHeight;
-        }
+      var savedHistory = localStorage.getItem('chat_history');
+      if (msgs && savedHistory) {
+        msgs.innerHTML = savedHistory;
+        msgs.scrollTop = msgs.scrollHeight;
+      }
     }
 
-    // Panggil saat halaman pertama kali dimuat
     document.addEventListener('DOMContentLoaded', loadChatHistory);
 
     function bukaChat() { box.style.display = 'block'; input.focus(); }
@@ -280,11 +606,10 @@
       div.textContent = teks;
       msgs.appendChild(div);
       msgs.scrollTop = msgs.scrollHeight;
-      saveChatHistory(); // Simpan riwayat setelah pesan ditambah
+      saveChatHistory();
       return div;
     }
 
-    // Tiga titik "sedang mengetik"
     function tampilkanMengetik() {
       var div = document.createElement('div');
       div.className = 'bubble bot typing';
@@ -294,14 +619,13 @@
       return div;
     }
 
-    // Balasan bot muncul huruf demi huruf
     function ketikBertahap(el, teks, selesai) {
       var i = 0;
       (function langkah() {
         i = reduce ? teks.length : i + 1;
         el.textContent = teks.slice(0, i);
         msgs.scrollTop = msgs.scrollHeight;
-        saveChatHistory(); // Simpan riwayat secara berkala saat efek ketik berjalan
+        saveChatHistory();
         if (i < teks.length) { setTimeout(langkah, 18); } else if (selesai) { selesai(); }
       })();
     }
@@ -322,17 +646,15 @@
       fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: pesan }) // Disesuaikan dengan payload backend Express ({ message })
+        body: JSON.stringify({ message: pesan })
       })
         .then(function (r) { return r.json(); })
         .then(function (d) { 
-          // Mendukung format response dari backend Gemini ({ success: true, data: { reply: "..." } }) ataupun format lama
           if (d.data && d.data.reply) return d.data.reply;
           return d.balasan || d.message || 'Respons tidak valid.'; 
         })
         .catch(function () { return 'Maaf, server sedang bermasalah.'; })
         .then(function (balasan) {
-          // Tampilkan titik-titik minimal 900ms supaya terasa natural
           var sisa = Math.max(0, 900 - (Date.now() - mulai));
           setTimeout(function () {
             indikator.remove();
@@ -345,20 +667,18 @@
     document.getElementById('chat-send').onclick = function () { kirim(); };
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter') kirim(); });
 
-    // Tombol "Tanya chatbot" di kartu produk
     document.querySelectorAll('.tanya').forEach(function (btn) {
-      btn.addEventListener('click', function () {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
         bukaChat();
         kirim('Harga ' + btn.dataset.nama + ' berapa?');
       });
     });
 
-    // Tombol saran pertanyaan
     document.querySelectorAll('#chips .chip').forEach(function (btn) {
       btn.addEventListener('click', function () { kirim(btn.dataset.q); });
     });
 
-    // Judul hero diketik
     (function () {
       var judul = document.getElementById('hero-title');
       var teks = judul.textContent.trim();
@@ -377,7 +697,6 @@
       })();
     })();
 
-    // Angka naik (count-up)
     document.querySelectorAll('.count').forEach(function (el) {
       var target = Number(el.dataset.to), n = 0;
       if (reduce || !target) return;
@@ -388,7 +707,6 @@
       }, 200);
     });
 
-    // Kartu produk muncul perlahan saat di-scroll
     var kartu = document.querySelectorAll('.reveal');
     if ('IntersectionObserver' in window) {
       var io = new IntersectionObserver(function (entries) {
