@@ -1,0 +1,101 @@
+<%- include('../partials/head', { title: title }) %>
+<style>
+  body { background: linear-gradient(135deg, #312e81 0%, #4f46e5 55%, #7c3aed 100%); min-height: 100vh; }
+  .auth-wrap { max-width: 460px; }
+  .role-opt { flex: 1; }
+  .role-opt input { display: none; }
+  .role-opt label { display: block; text-align: center; padding: 10px 6px; border: 1.5px solid #e2e8f0; border-radius: 14px;
+                    cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--muted); transition: all .2s; }
+  .role-opt label small { display: block; font-weight: 400; font-size: .7rem; }
+  .role-opt input:checked + label { border-color: var(--brand); background: #eef2ff; color: var(--brand-dark); }
+</style>
+<main class="container d-flex align-items-center justify-content-center py-5" style="min-height:100vh">
+  <div class="auth-wrap w-100">
+    <div class="text-center text-white mb-4">
+      <h1 class="h2 fw-bold mb-1">Sigap<span style="color:#c7d2fe">Chat</span></h1>
+      <p class="mb-0" style="color:#e0e7ff">Asisten Chatbot AI untuk Layanan Pelanggan</p>
+    </div>
+
+    <div class="card-soft p-4">
+      <ul class="nav nav-pills nav-fill mb-3" role="tablist">
+        <li class="nav-item"><button class="nav-link <%= mode === 'masuk' ? 'active' : '' %>" data-bs-toggle="pill" data-bs-target="#tab-masuk" type="button">Masuk</button></li>
+        <li class="nav-item"><button class="nav-link <%= mode === 'daftar' ? 'active' : '' %>" data-bs-toggle="pill" data-bs-target="#tab-daftar" type="button">Daftar</button></li>
+      </ul>
+
+      <% if (error) { %><div class="alert alert-danger py-2 small"><%= error %></div><% } %>
+      <% if (info) { %><div class="alert alert-success py-2 small"><%= info %></div><% } %>
+
+      <div class="small text-muted mb-2">Masuk / daftar sebagai:</div>
+      <div class="d-flex gap-2 mb-3" id="role-group">
+        <div class="role-opt"><input type="radio" name="rolepick" id="r-pelanggan" value="pelanggan" <%= role === 'pelanggan' ? 'checked' : '' %>><label for="r-pelanggan">🛍️ Pelanggan<small>Belanja &amp; chat</small></label></div>
+        <div class="role-opt"><input type="radio" name="rolepick" id="r-admin" value="admin" <%= role === 'admin' ? 'checked' : '' %>><label for="r-admin">🛠️ Admin<small>Layanan pelanggan</small></label></div>
+        <div class="role-opt"><input type="radio" name="rolepick" id="r-manager" value="manager" <%= role === 'manager' ? 'checked' : '' %>><label for="r-manager">📊 Manager<small>Statistik</small></label></div>
+      </div>
+
+      <div class="tab-content">
+        <!-- MASUK -->
+        <div class="tab-pane fade <%= mode === 'masuk' ? 'show active' : '' %>" id="tab-masuk">
+          <form method="POST" action="/masuk">
+            <input type="hidden" name="role" class="role-input" value="<%= role %>">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Email</label>
+              <input type="email" name="email" class="form-control" value="<%= values.email || '' %>" placeholder="nama@email.com" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Password</label>
+              <input type="password" name="password" class="form-control" placeholder="Password" required>
+            </div>
+            <button class="btn btn-brand w-100 py-2" type="submit">Masuk</button>
+          </form>
+        </div>
+
+        <!-- DAFTAR -->
+        <div class="tab-pane fade <%= mode === 'daftar' ? 'show active' : '' %>" id="tab-daftar">
+          <form method="POST" action="/daftar">
+            <input type="hidden" name="role" class="role-input" value="<%= role %>">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Nama lengkap</label>
+              <input type="text" name="nama" class="form-control" value="<%= values.nama || '' %>" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Email</label>
+              <input type="email" name="email" class="form-control" value="<%= values.email || '' %>" required>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small fw-semibold">Password</label>
+                <input type="password" name="password" class="form-control" minlength="6" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-semibold">Ulangi password</label>
+                <input type="password" name="konfirmasi" class="form-control" minlength="6" required>
+              </div>
+            </div>
+            <div class="mb-3" id="kode-wrap" style="display:none">
+              <label class="form-label small fw-semibold">Kode akses <span id="kode-role"></span></label>
+              <input type="password" name="kode" class="form-control" placeholder="Diberikan oleh pengelola platform">
+            </div>
+            <button class="btn btn-brand w-100 py-2" type="submit">Buat Akun</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <p class="text-center small mt-3" style="color:#c7d2fe">Pelanggan bebas mendaftar. Admin &amp; Manager memerlukan kode akses.</p>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function terapkanRole() {
+    var r = document.querySelector('input[name="rolepick"]:checked').value;
+    document.querySelectorAll('.role-input').forEach(function (el) { el.value = r; });
+    var wrap = document.getElementById('kode-wrap');
+    wrap.style.display = r === 'pelanggan' ? 'none' : 'block';
+    wrap.querySelector('input').required = r !== 'pelanggan';
+    document.getElementById('kode-role').textContent = r === 'pelanggan' ? '' : '(' + r + ')';
+  }
+  document.querySelectorAll('input[name="rolepick"]').forEach(function (el) { el.addEventListener('change', terapkanRole); });
+  terapkanRole();
+</script>
+</body>
+</html>

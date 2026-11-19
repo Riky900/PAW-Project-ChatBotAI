@@ -1,0 +1,132 @@
+<%- include('../partials/head', { title: title }) %>
+<%- include('../partials/nav') %>
+<main class="container py-4">
+  <div class="hero-mini mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h1 class="h4 fw-bold mb-1">Panel Admin Layanan Pelanggan</h1>
+      <p class="mb-0" style="color:#e0e7ff">Kelola FAQ chatbot, status pesanan, dan kasus yang dieskalasi ke staf.</p>
+    </div>
+    <a href="/toko" class="btn btn-light rounded-pill fw-semibold">⚙️ Kelola Produk (halaman toko)</a>
+  </div>
+
+  <% if (pesan) { %><div class="alert alert-<%= tipe %> py-2"><%= pesan %></div><% } %>
+
+  <ul class="nav nav-pills mb-3 gap-1">
+    <li class="nav-item"><button class="nav-link <%= tab === 'faq' ? 'active' : '' %>" data-bs-toggle="pill" data-bs-target="#t-faq" type="button">📚 FAQ (<%= faq.length %>)</button></li>
+    <li class="nav-item"><button class="nav-link <%= tab === 'pesanan' ? 'active' : '' %>" data-bs-toggle="pill" data-bs-target="#t-pesanan" type="button">📦 Pesanan (<%= pesanan.length %>)</button></li>
+    <li class="nav-item"><button class="nav-link <%= tab === 'eskalasi' ? 'active' : '' %>" data-bs-toggle="pill" data-bs-target="#t-eskalasi" type="button">🙋 Eskalasi (<%= eskalasi.filter(function (e) { return e.status === 'Menunggu'; }).length %> menunggu)</button></li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- FAQ -->
+    <div class="tab-pane fade <%= tab === 'faq' ? 'show active' : '' %>" id="t-faq">
+      <div class="card-soft p-4 mb-3">
+        <h2 class="h6 fw-bold mb-3">➕ Tambah FAQ</h2>
+        <form method="POST" action="/admin/faq" class="row g-2">
+          <div class="col-md-6"><input name="pertanyaan" class="form-control form-control-sm" placeholder="Pertanyaan, mis. Berapa lama pengiriman?" required></div>
+          <div class="col-md-6"><input name="kata_kunci" class="form-control form-control-sm" placeholder="Kata kunci dipisah koma, mis. pengiriman, ongkir, kurir" required></div>
+          <div class="col-12"><textarea name="jawaban" rows="2" class="form-control form-control-sm" placeholder="Jawaban yang akan dikirim chatbot" required></textarea></div>
+          <div class="col-12 d-flex justify-content-between align-items-center">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="aktif" value="1" id="faq-aktif-baru" checked><label class="form-check-label small" for="faq-aktif-baru">Aktif</label></div>
+            <button class="btn btn-brand btn-sm px-4" type="submit">Simpan FAQ</button>
+          </div>
+        </form>
+      </div>
+
+      <% faq.forEach(function (f) { %>
+        <form method="POST" action="/admin/faq/<%= f.id %>" class="card-soft p-3 mb-2">
+          <div class="row g-2">
+            <div class="col-md-6"><input name="pertanyaan" class="form-control form-control-sm fw-semibold" value="<%= f.pertanyaan %>" required></div>
+            <div class="col-md-6"><input name="kata_kunci" class="form-control form-control-sm" value="<%= f.kata_kunci %>" required></div>
+            <div class="col-12"><textarea name="jawaban" rows="2" class="form-control form-control-sm" required><%= f.jawaban %></textarea></div>
+            <div class="col-12 d-flex justify-content-between align-items-center">
+              <div class="form-check"><input class="form-check-input" type="checkbox" name="aktif" value="1" id="faq-<%= f.id %>" <%= f.aktif ? 'checked' : '' %>><label class="form-check-label small" for="faq-<%= f.id %>">Aktif</label></div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" type="submit" formaction="/admin/faq/<%= f.id %>/hapus" formnovalidate onclick="return confirm('Hapus FAQ ini?')">Hapus</button>
+                <button class="btn btn-brand btn-sm px-3" type="submit">Simpan perubahan</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      <% }) %>
+      <% if (!faq.length) { %><p class="text-muted text-center py-3">Belum ada FAQ.</p><% } %>
+    </div>
+
+    <!-- PESANAN -->
+    <div class="tab-pane fade <%= tab === 'pesanan' ? 'show active' : '' %>" id="t-pesanan">
+      <div class="card-soft p-4 mb-3">
+        <h2 class="h6 fw-bold mb-3">➕ Buat Pesanan untuk Pelanggan</h2>
+        <form method="POST" action="/admin/pesanan" class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold mb-1">Pelanggan</label>
+            <select name="pengguna_id" class="form-select form-select-sm" required>
+              <% pelanggan.forEach(function (u) { %><option value="<%= u.id %>"><%= u.nama %> (<%= u.email %>)</option><% }) %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold mb-1">Produk</label>
+            <select name="produk_id" class="form-select form-select-sm" required>
+              <% produk.forEach(function (p) { %><option value="<%= p.id %>"><%= p.nama %> (stok <%= p.stok %>)</option><% }) %>
+            </select>
+          </div>
+          <div class="col-md-2"><label class="form-label small fw-semibold mb-1">Jumlah</label><input type="number" name="jumlah" min="1" value="1" class="form-control form-control-sm" required></div>
+          <div class="col-md-2"><button class="btn btn-brand btn-sm w-100" type="submit">Buat</button></div>
+        </form>
+      </div>
+
+      <div class="card-soft p-3">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light"><tr><th>No.</th><th>Pelanggan</th><th>Produk</th><th>Total</th><th colspan="2">Status &amp; estimasi tiba</th></tr></thead>
+            <tbody>
+              <% pesanan.forEach(function (p) { %>
+                <tr>
+                  <td class="fw-semibold"><%= p.nomor_pesanan %></td>
+                  <td><%= p.nama_pelanggan %></td>
+                  <td><%= p.nama_produk %> ×<%= p.jumlah %></td>
+                  <td><%= formatRupiah(p.total) %></td>
+                  <td colspan="2">
+                    <form method="POST" action="/admin/pesanan/<%= p.id %>/status" class="d-flex gap-1">
+                      <select name="status" class="form-select form-select-sm">
+                        <% statusList.forEach(function (s) { %><option <%= s === p.status ? 'selected' : '' %>><%= s %></option><% }) %>
+                      </select>
+                      <input type="date" name="estimasi_tiba" class="form-control form-control-sm" value="<%= p.estimasi_tiba ? new Date(p.estimasi_tiba).toISOString().slice(0, 10) : '' %>">
+                      <button class="btn btn-sm btn-brand px-3" type="submit">Simpan</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+              <% if (!pesanan.length) { %><tr><td colspan="6" class="text-center text-muted py-3">Belum ada pesanan.</td></tr><% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESKALASI -->
+    <div class="tab-pane fade <%= tab === 'eskalasi' ? 'show active' : '' %>" id="t-eskalasi">
+      <div class="card-soft p-3">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light"><tr><th>#</th><th>Pelanggan</th><th>Waktu</th><th>Status</th><th class="text-end">Aksi</th></tr></thead>
+            <tbody>
+              <% eskalasi.forEach(function (e) { %>
+                <tr>
+                  <td><%= e.id %></td>
+                  <td><%= e.nama_pelanggan %> <span class="text-muted">(<%= e.email %>)</span></td>
+                  <td><%= formatTimestamp(new Date(e.dibuat)) %></td>
+                  <td><span class="badge rounded-pill text-bg-<%= e.status === 'Selesai' ? 'success' : 'warning' %>"><%= e.status %></span></td>
+                  <td class="text-end"><a href="/admin/eskalasi/<%= e.id %>" class="btn btn-sm btn-outline-primary rounded-pill px-3"><%= e.status === 'Menunggu' ? 'Tangani' : 'Lihat' %></a></td>
+                </tr>
+              <% }) %>
+              <% if (!eskalasi.length) { %><tr><td colspan="5" class="text-center text-muted py-3">Belum ada eskalasi.</td></tr><% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

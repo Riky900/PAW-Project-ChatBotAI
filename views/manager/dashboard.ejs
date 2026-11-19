@@ -1,0 +1,64 @@
+<%- include('../partials/head', { title: title }) %>
+<%- include('../partials/nav') %>
+<%
+  function kartu(judul, nilai, satuan, target, lolos, ket) {
+    return { judul: judul, nilai: nilai, satuan: satuan, target: target, lolos: lolos, ket: ket };
+  }
+  var metrik = [
+    kartu('Waktu respons rata-rata (M-01)', s.rataResponsDetik, ' dtk', 'Target ≤ 30 dtk', s.rataResponsDetik != null && s.rataResponsDetik <= 30, s.jumlahJawaban + ' jawaban dicatat'),
+    kartu('Pengguna puas, rating ≥ 4 (M-02)', s.kepuasanPersen, '%', 'Target ≥ 75%', s.kepuasanPersen != null && s.kepuasanPersen >= 75, s.jumlahRating + ' rating' + (s.ratingRata != null ? ' · rata-rata ' + s.ratingRata + '/5' : '')),
+    kartu('Selesai tanpa eskalasi (M-04)', s.penyelesaianPersen, '%', 'Target ≥ 70%', s.penyelesaianPersen != null && s.penyelesaianPersen >= 70, s.totalEskalasi + ' dari ' + s.totalPercakapan + ' percakapan dieskalasi'),
+    kartu('Keterlibatan ≥ 2 pesan (M-05)', s.keterlibatanPersen, '%', 'Target ≥ 60%', s.keterlibatanPersen != null && s.keterlibatanPersen >= 60, s.totalPesanPengguna + ' pesan dari pengguna')
+  ];
+%>
+<main class="container py-4">
+  <div class="hero-mini mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h1 class="h4 fw-bold mb-1">Dashboard Statistik Layanan Chatbot</h1>
+      <p class="mb-0" style="color:#e0e7ff">Waktu respons, kepuasan, dan tingkat penyelesaian masalah per periode.</p>
+    </div>
+    <form method="GET" action="/manager">
+      <select name="periode" class="form-select rounded-pill" onchange="this.form.submit()">
+        <option value="7" <%= periode === '7' ? 'selected' : '' %>>7 hari terakhir</option>
+        <option value="30" <%= periode === '30' ? 'selected' : '' %>>30 hari terakhir</option>
+        <option value="90" <%= periode === '90' ? 'selected' : '' %>>90 hari terakhir</option>
+        <option value="0" <%= periode === '0' ? 'selected' : '' %>>Semua waktu</option>
+      </select>
+    </form>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <% metrik.forEach(function (m) { %>
+      <div class="col-md-6 col-xl-3">
+        <div class="card-soft p-4 h-100">
+          <div class="small text-muted mb-1"><%= m.judul %></div>
+          <div class="display-6 fw-bold"><%= m.nilai == null ? '—' : m.nilai %><small class="fs-6 text-muted"><%= m.nilai == null ? '' : m.satuan %></small></div>
+          <div class="mt-2">
+            <% if (m.nilai == null) { %><span class="badge rounded-pill text-bg-secondary">Belum ada data</span>
+            <% } else { %><span class="badge rounded-pill text-bg-<%= m.lolos ? 'success' : 'danger' %>"><%= m.lolos ? 'Target tercapai' : 'Di bawah target' %></span><% } %>
+            <span class="small text-muted ms-1"><%= m.target %></span>
+          </div>
+          <div class="small text-muted mt-2"><%= m.ket %></div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+  <div class="card-soft p-4">
+    <h2 class="h6 fw-bold mb-3">Aktivitas Harian</h2>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle small mb-0">
+        <thead class="table-light"><tr><th>Tanggal</th><th>Percakapan</th><th>Rata-rata respons</th></tr></thead>
+        <tbody>
+          <% s.harian.forEach(function (h) { %>
+            <tr><td><%= h.tanggal %></td><td><%= h.percakapan %></td><td><%= h.rata_ms == null ? '—' : (Number(h.rata_ms) / 1000).toFixed(1) + ' dtk' %></td></tr>
+          <% }) %>
+          <% if (!s.harian.length) { %><tr><td colspan="3" class="text-center text-muted py-3">Belum ada percakapan pada periode ini.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+    <p class="small text-muted mt-3 mb-0">Catatan: metrik M-03 (kemudahan pemakaian) diukur lewat survei terpisah, bukan dari data chat.</p>
+  </div>
+</main>
+</body>
+</html>

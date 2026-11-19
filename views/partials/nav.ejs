@@ -1,0 +1,20 @@
+<nav class="nav-glass sticky-top py-3">
+  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <a class="brand fs-5" href="/">Sigap<span>Chat</span></a>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <% if (user) { %>
+        <% if (user.role === 'pelanggan') { %>
+          <a class="btn btn-sm btn-outline-secondary rounded-pill" href="/toko">Toko</a>
+          <a class="btn btn-sm btn-outline-secondary rounded-pill" href="/pesanan">Pesanan Saya</a>
+        <% } else if (user.role === 'admin') { %>
+          <a class="btn btn-sm btn-outline-secondary rounded-pill" href="/admin">Panel Admin</a>
+          <a class="btn btn-sm btn-outline-secondary rounded-pill" href="/toko">Katalog &amp; Produk</a>
+        <% } else { %>
+          <a class="btn btn-sm btn-outline-secondary rounded-pill" href="/manager">Dashboard</a>
+        <% } %>
+        <span class="badge rounded-pill text-bg-light border fw-normal px-3 py-2">👤 <%= user.nama %> · <%= user.role %></span>
+        <a class="btn btn-sm btn-brand px-3" href="/keluar">Keluar</a>
+      <% } %>
+    </div>
+  </div>
+</nav>
